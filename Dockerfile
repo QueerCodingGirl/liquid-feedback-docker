@@ -49,7 +49,7 @@ WORKDIR /opt/lf/sources
 # Download sources
 #
 RUN hg clone -r ${LF_CORE_VERSION} https://www.public-software-group.org/mercurial/liquid_feedback_core/ ./core \
- && hg clone -r ${LF_FEND_VERSION} https://www.public-software-group.org/mercurial/liquid_feedback_frontend.devel/ ./frontend \
+ && hg clone -r ${LF_FEND_VERSION} https://www.public-software-group.org/mercurial/liquid_feedback_frontend/ ./frontend \
  && hg clone -r ${LF_WMCP_VERSION} https://www.public-software-group.org/mercurial/webmcp ./webmcp\
  && hg clone -r ${LF_MOONBRIDGE_VERSION} https://www.public-software-group.org/mercurial/moonbridge ./moonbridge
 
