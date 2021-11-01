@@ -6,10 +6,10 @@ FROM debian:buster-slim AS builder
 
 #MAINTAINER Pascal Schneider <https://github.com/DarkGigaByte>
 
-ENV LF_CORE_VERSION v3.2.2
-ENV LF_FEND_VERSION v3.2.1
-ENV LF_WMCP_VERSION v2.2.0
-ENV LF_MOONBRIDGE_VERSION v1.1.1
+ENV LF_CORE_VERSION v4.2.2
+ENV LF_FEND_VERSION v4.0.0
+ENV LF_WMCP_VERSION v2.2.1
+ENV LF_MOONBRIDGE_VERSION v1.1.3
 ENV LF_LATLON_VERSION v0.14
 
 #
@@ -47,11 +47,24 @@ WORKDIR /opt/lf/sources
 
 #
 # Download sources
+# 
+RUN curl https://www.public-software-group.org/pub/projects/liquid_feedback/backend/${LF_CORE_VERSION}/liquid_feedback_core-${LF_CORE_VERSION}.tar.gz -o core.tar.gz \
+ && curl https://www.public-software-group.org/pub/projects/liquid_feedback/frontend/${LF_FEND_VERSION}/liquid_feedback_frontend-${LF_FEND_VERSION}.tar.gz -o frontend.tar.gz \
+ && curl https://www.public-software-group.org/pub/projects/webmcp/${LF_WMCP_VERSION}/webmcp-${LF_WMCP_VERSION}.tar.gz -o webmcp.tar.gz \
+ && curl https://www.public-software-group.org/pub/projects/moonbridge/${LF_MOONBRIDGE_VERSION}/moonbridge-${LF_MOONBRIDGE_VERSION}.tar.gz -o moonbridge.tar.gz
+ 
 #
-RUN hg clone -r ${LF_CORE_VERSION} https://www.public-software-group.org/mercurial/liquid_feedback_core/ ./core \
- && hg clone -r ${LF_FEND_VERSION} https://www.public-software-group.org/mercurial/liquid_feedback_frontend/ ./frontend \
- && hg clone -r ${LF_WMCP_VERSION} https://www.public-software-group.org/mercurial/webmcp ./webmcp\
- && hg clone -r ${LF_MOONBRIDGE_VERSION} https://www.public-software-group.org/mercurial/moonbridge ./moonbridge
+# Extract sources
+# 
+RUN mkdir ./core \ 
+ && mkdir ./frontend \ 
+ && mkdir ./webmcp \ 
+ && mkdir ./moonbridge
+ 
+RUN tar -zxf core.tar.gz -C ./core --strip 1 \ 
+ && tar -zxf frontend.tar.gz -C ./frontend --strip 1 \ 
+ && tar -zxf webmcp.tar.gz -C ./webmcp --strip 1 \ 
+ && tar -zxf moonbridge.tar.gz -C ./moonbridge --strip 1
 
 #
 # Build moonbridge
@@ -82,8 +95,9 @@ RUN make \
 WORKDIR /opt/lf/
 
 RUN cd /opt/lf/sources/frontend \
-    && hg archive -t files /opt/lf/frontend \
-    && cd /opt/lf/frontend/fastpath \
+    && mkdir /opt/lf/frontend \
+    && cp -ar /opt/lf/sources/frontend/ /opt/lf/ \
+    && cd /opt/lf/frontend/fastpath/ \
     && make \
     && chown www-data /opt/lf/frontend/tmp
 
@@ -91,7 +105,7 @@ RUN cd /opt/lf/sources/frontend \
 FROM debian:buster-slim
 
 RUN apt-get update && apt-get install --no-install-recommends -y\
-                                      msmtp-mta imagemagick python3-pip\
+                                      msmtp-mta imagemagick python3-pip sassc\
                                       liblua5.3-0 postgresql-client\
  && pip3 install markdown2
 

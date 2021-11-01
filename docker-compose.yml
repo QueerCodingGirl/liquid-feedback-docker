@@ -23,7 +23,7 @@ services:
     entrypoint: ["/opt/lf/bin/lf_updated"]
     
   db:
-    image: 'postgres:12-alpine'
+    image: 'postgres:14-alpine'
     restart: unless-stopped
     volumes:
       - pg:/var/lib/postgresql/data
