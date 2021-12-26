@@ -2,7 +2,7 @@
 # Dockerfile for liquid-feedback
 #
 
-FROM debian:buster-slim AS builder
+FROM debian:bullseye-slim AS builder
 
 #MAINTAINER Pascal Schneider <https://github.com/DarkGigaByte>
 
@@ -16,12 +16,15 @@ ENV LF_LATLON_VERSION v0.14
 # install dependencies
 #
 
-RUN apt-get update && apt-get -y remove exim && apt-get -y install \
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+	apt-get install -yqq --no-install-recommends \
         build-essential \
         lsb-release\
         postgresql-server-dev-all\
         postgresql\
-        msmtp-mta \
+        nullmailer \
         libbsd-dev\
         imagemagick \
         libpq-dev \
@@ -30,10 +33,10 @@ RUN apt-get update && apt-get -y remove exim && apt-get -y install \
         liblua5.3-0-dbg \
         liblua5.3-dev \
         mercurial \
-        python-pip \
+        python3-markdown2 \
         pmake \
-        curl \
-    && pip install markdown2
+        ca-certificates \
+        curl && rm -rf /var/lib/apt/lists/*
 
 #
 # prepare file tree
@@ -102,12 +105,11 @@ RUN cd /opt/lf/sources/frontend \
     && chown www-data /opt/lf/frontend/tmp
 
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 RUN apt-get update && apt-get install --no-install-recommends -y\
-                                      msmtp-mta imagemagick python3-pip sassc\
-                                      liblua5.3-0 postgresql-client\
- && pip3 install markdown2
+                                      nullmailer imagemagick python3-markdown2 sassc\
+                                      liblua5.3-0 postgresql-client
 
 COPY --from=builder /opt/lf /opt/lf
 
