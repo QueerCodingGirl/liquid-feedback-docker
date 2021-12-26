@@ -6,12 +6,15 @@ services:
       - '8080:8080'
     volumes:
       - lf:/opt/lf/frontend/config
+      - ./nullmailer:/etc/nullmailer
     #image: 'darkgigabyte/liquid-feedback-docker:latest'
     build: .
     depends_on:
       - db
     env_file:
       - lf.env
+    networks:
+      - stack
 
   lf-cron:
     restart: unless-stopped
@@ -20,7 +23,11 @@ services:
       - db
     env_file:
       - lf.env
+    volumes:
+      - ./nullmailer:/etc/nullmailer
     entrypoint: ["/opt/lf/bin/lf_updated"]
+    networks:
+      - stack
     
   db:
     image: 'postgres:14-alpine'
@@ -29,7 +36,13 @@ services:
       - pg:/var/lib/postgresql/data
     env_file:
       - lf.env
+    networks:
+      - stack
 
 volumes:
   lf:
   pg:
+
+networks:
+  stack:
+    external: false

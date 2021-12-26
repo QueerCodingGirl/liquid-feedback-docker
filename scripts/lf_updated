@@ -2,6 +2,8 @@
 
 logger(){>&2 echo $@;}
 
+service nullmailer start
+
 LFUSER="lf"
 DBHOST="${POSTGRES_HOST}"
 DBNAME="${POSTGRES_DB}"
