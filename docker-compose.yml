@@ -7,6 +7,7 @@ services:
     volumes:
       - lf:/opt/lf/frontend/config
       - ./nullmailer:/etc/nullmailer
+      - ./mailname:/etc/mailname
     #image: 'darkgigabyte/liquid-feedback-docker:latest'
     build: .
     depends_on:
@@ -25,6 +26,7 @@ services:
       - lf.env
     volumes:
       - ./nullmailer:/etc/nullmailer
+      - ./mailname:/etc/mailname
     entrypoint: ["/opt/lf/bin/lf_updated"]
     networks:
       - stack
