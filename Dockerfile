@@ -2,26 +2,29 @@
 # Dockerfile for liquid-feedback
 #
 
-FROM debian:buster-slim AS builder
+FROM debian:bullseye-slim AS builder
 
 #MAINTAINER Pascal Schneider <https://github.com/DarkGigaByte>
 
-ENV LF_CORE_VERSION v3.2.2
-ENV LF_FEND_VERSION v3.2.1
-ENV LF_WMCP_VERSION v2.2.0
-ENV LF_MOONBRIDGE_VERSION v1.1.1
+ENV LF_CORE_VERSION v4.2.2
+ENV LF_FEND_VERSION v4.0.0
+ENV LF_WMCP_VERSION v2.2.1
+ENV LF_MOONBRIDGE_VERSION v1.1.3
 ENV LF_LATLON_VERSION v0.14
 
 #
 # install dependencies
 #
 
-RUN apt-get update && apt-get -y remove exim && apt-get -y install \
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+	apt-get install -yqq --no-install-recommends \
         build-essential \
         lsb-release\
         postgresql-server-dev-all\
         postgresql\
-        msmtp-mta \
+        nullmailer \
         libbsd-dev\
         imagemagick \
         libpq-dev \
@@ -30,10 +33,10 @@ RUN apt-get update && apt-get -y remove exim && apt-get -y install \
         liblua5.3-0-dbg \
         liblua5.3-dev \
         mercurial \
-        python-pip \
+        python3-markdown2 \
         pmake \
-        curl \
-    && pip install markdown2
+        ca-certificates \
+        curl && rm -rf /var/lib/apt/lists/*
 
 #
 # prepare file tree
@@ -47,11 +50,24 @@ WORKDIR /opt/lf/sources
 
 #
 # Download sources
+# 
+RUN curl https://www.public-software-group.org/pub/projects/liquid_feedback/backend/${LF_CORE_VERSION}/liquid_feedback_core-${LF_CORE_VERSION}.tar.gz -o core.tar.gz \
+ && curl https://www.public-software-group.org/pub/projects/liquid_feedback/frontend/${LF_FEND_VERSION}/liquid_feedback_frontend-${LF_FEND_VERSION}.tar.gz -o frontend.tar.gz \
+ && curl https://www.public-software-group.org/pub/projects/webmcp/${LF_WMCP_VERSION}/webmcp-${LF_WMCP_VERSION}.tar.gz -o webmcp.tar.gz \
+ && curl https://www.public-software-group.org/pub/projects/moonbridge/${LF_MOONBRIDGE_VERSION}/moonbridge-${LF_MOONBRIDGE_VERSION}.tar.gz -o moonbridge.tar.gz
+ 
 #
-RUN hg clone -r ${LF_CORE_VERSION} https://www.public-software-group.org/mercurial/liquid_feedback_core/ ./core \
- && hg clone -r ${LF_FEND_VERSION} https://www.public-software-group.org/mercurial/liquid_feedback_frontend/ ./frontend \
- && hg clone -r ${LF_WMCP_VERSION} https://www.public-software-group.org/mercurial/webmcp ./webmcp\
- && hg clone -r ${LF_MOONBRIDGE_VERSION} https://www.public-software-group.org/mercurial/moonbridge ./moonbridge
+# Extract sources
+# 
+RUN mkdir ./core \ 
+ && mkdir ./frontend \ 
+ && mkdir ./webmcp \ 
+ && mkdir ./moonbridge
+ 
+RUN tar -zxf core.tar.gz -C ./core --strip 1 \ 
+ && tar -zxf frontend.tar.gz -C ./frontend --strip 1 \ 
+ && tar -zxf webmcp.tar.gz -C ./webmcp --strip 1 \ 
+ && tar -zxf moonbridge.tar.gz -C ./moonbridge --strip 1
 
 #
 # Build moonbridge
@@ -82,18 +98,18 @@ RUN make \
 WORKDIR /opt/lf/
 
 RUN cd /opt/lf/sources/frontend \
-    && hg archive -t files /opt/lf/frontend \
-    && cd /opt/lf/frontend/fastpath \
+    && mkdir /opt/lf/frontend \
+    && cp -ar /opt/lf/sources/frontend/ /opt/lf/ \
+    && cd /opt/lf/frontend/fastpath/ \
     && make \
     && chown www-data /opt/lf/frontend/tmp
 
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 RUN apt-get update && apt-get install --no-install-recommends -y\
-                                      msmtp-mta imagemagick python3-pip\
-                                      liblua5.3-0 postgresql-client\
- && pip3 install markdown2
+                                      nullmailer imagemagick python3-markdown2 sassc\
+                                      liblua5.3-0 postgresql-client
 
 COPY --from=builder /opt/lf /opt/lf
 
